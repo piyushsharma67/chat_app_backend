@@ -1,5 +1,1 @@
 package store
-
-func Authentication(){
-	
-}

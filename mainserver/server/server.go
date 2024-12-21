@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"mainserver/schema"
 	"net/http"
 	"os"
 	"os/signal"
@@ -11,43 +12,43 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/jmoiron/sqlx"
+	"github.com/jackc/pgx/v5"
 )
 
-type Server struct{
-	db *sqlx.DB
+type Server struct {
+	db      *pgx.Conn
+	queries *schema.Queries
 }
 
-
-
-func New(db *sqlx.DB) *Server{
+func New(db *pgx.Conn) *Server {
 	s := &Server{}
+	query := schema.New(db)
 
-	s.db=db
+	s.db = db
+	s.queries = query
 
 	return s
 }
 
-func (server *Server)SetupRoutes(r *gin.Engine)*gin.Engine{
-	
-	publicRoutes:=r.Group("/public")
-	publicRoutes.GET("/signin",server.Signin)
-	publicRoutes.POST("/signup",server.Signup)
+func (server *Server) SetupRoutes(r *gin.Engine) *gin.Engine {
 
-	privateRoutes:=r.Group("/private")
+	publicRoutes := r.Group("/public")
+	publicRoutes.GET("/signin", server.Signin)
+	publicRoutes.POST("/signup", server.Signup)
+
+	privateRoutes := r.Group("/private")
 	privateRoutes.Use(server.AuthenticateToken)
 
-	privateRoutes.GET("/home",server.Home)
+	privateRoutes.GET("/home", server.Home)
 
 	return r
 }
 
-
-func (s *Server) Start()error{
+func (s *Server) Start() error {
 
 	r := gin.Default()
 
-	r=s.SetupRoutes(r)
+	r = s.SetupRoutes(r)
 
 	srv := &http.Server{
 		Addr:    fmt.Sprintf(":%s", os.Getenv("PORT")),
