@@ -11,6 +11,10 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+func (s *Server) Health(g *gin.Context) {
+	utils.ResponseFormatter(g, http.StatusOK, true, string([]byte("I am healthy")), nil)
+}
+
 type AuthenticationResponse struct {
 	User  schema.User `json:"user"`
 	Token string      `json:"token"`
@@ -54,10 +58,33 @@ func (s *Server) Signup(r *gin.Context) {
 	utils.ResponseFormatter(r, http.StatusOK, true, response, nil)
 }
 
-func (s *Server) Health(g *gin.Context) {
-	utils.ResponseFormatter(g, http.StatusOK, true, string([]byte("I am healthy")), nil)
-}
-
 func (s *Server) Signin(r *gin.Context) {
+	var req models.SigninRequest
+
+	if err := r.ShouldBindJSON(&req); err != nil {
+		r.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	user, err := s.queries.GetUser(r, req.Email)
+
+	if err != nil {
+		if !errors.Is(err, sql.ErrNoRows) {
+			// Handle case where user does not exist
+			utils.ResponseFormatter(r, http.StatusNotFound, true, nil, err)
+		}
+	}
+
+	token, err := utils.GenerateToken(int(user.ID), user.Email)
+
+	if err != nil {
+		utils.ResponseFormatter(r, http.StatusBadRequest, true, nil, err)
+	}
+	var response AuthenticationResponse
+
+	response.User = user
+	response.Token = token
+
+	utils.ResponseFormatter(r, http.StatusOK, true, response, nil)
 
 }

@@ -10,8 +10,10 @@ services:
       - "3000:3000"
     environment:
       - KAFKA_BROKER=kafka:9092
-      - DATABASE_URL=postgres://postgres:password@host.docker.internal:5432/mydb?sslmode=disable
+      - DATABASE_URL=postgres://postgres:password@192.168.1.7:5432/mydb?sslmode=disable # for linux
+      # - DATABASE_URL=postgres://postgres:password@host.docker.internal:5432/mydb?sslmode=disable # for mac
       - PORT=3000
+      - secret="sgfdhdfvxcbng5345vbgnvffdb435"
     volumes:
       - ./mainserver:/app
 
