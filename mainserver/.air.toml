@@ -1,0 +1,2 @@
+root = "."
+build = "main.go"
