@@ -2,6 +2,7 @@ package utils
 
 import (
 	"errors"
+	"fmt"
 	"mainserver/schema"
 	"os"
 	"strings"
@@ -44,6 +45,7 @@ func ValidateToken(tokenString string) (schema.User, error) {
 		if !ok {
 			return schema.User{}, errors.New("userID claim is missing or invalid")
 		}
+
 		email, ok := claims["email"].(string)
 		if !ok {
 			return schema.User{}, errors.New("email claim is missing or invalid")
@@ -57,6 +59,6 @@ func ValidateToken(tokenString string) (schema.User, error) {
 
 		return user, nil
 	}
-
+	fmt.Println("yay4")
 	return schema.User{}, errors.New("invalid token")
 }

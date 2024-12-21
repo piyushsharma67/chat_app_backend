@@ -3,6 +3,7 @@ package server
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"mainserver/models"
 	"mainserver/schema"
 	"mainserver/utils"
@@ -12,6 +13,7 @@ import (
 )
 
 func (s *Server) Health(g *gin.Context) {
+	fmt.Println("yay")
 	utils.ResponseFormatter(g, http.StatusOK, true, string([]byte("I am healthy")), nil)
 }
 
@@ -47,7 +49,7 @@ func (s *Server) Signup(r *gin.Context) {
 	hashedPassword, err := utils.HashPassword(req.Password)
 
 	if err != nil {
-		utils.ResponseFormatter(r, http.StatusInternalServerError, false, nil, utils.ErrErrorOccurred)
+		utils.ResponseFormatter(r, http.StatusInternalServerError, false, nil, utils.ErrorOccurredAuthentication)
 		return
 	}
 

@@ -4,7 +4,9 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"mainserver/middleware"
+
+	// "mainserver/middleware"
+
 	"mainserver/schema"
 	"net/http"
 	"os"
@@ -39,8 +41,7 @@ func (server *Server) SetupRoutes(r *gin.Engine) *gin.Engine {
 	publicRoutes.POST("/signup", server.Signup)
 
 	privateRoutes := r.Group("/private")
-	privateRoutes.Use(middleware.Authenticateuser)
-
+	// privateRoutes.Use(middleware.Authenticateuser)
 	privateRoutes.GET("/home", server.Home)
 
 	return r
@@ -53,7 +54,7 @@ func (s *Server) Start() error {
 	r = s.SetupRoutes(r)
 
 	srv := &http.Server{
-		Addr:    fmt.Sprintf(":%s", os.Getenv("PORT")),
+		Addr:    fmt.Sprintf(":%d", 3000),
 		Handler: r,
 	}
 

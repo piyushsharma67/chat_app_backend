@@ -1,0 +1,67 @@
+name: CI/CD Pipeline for Go Application
+
+on:
+  push:
+    branches:
+      - main          # Trigger on push to main branch (production)
+      - staging       # Trigger on push to staging branch
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    # Step 1: Checkout the code
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    # Step 2: Set up Go environment
+    - name: Set up Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: '1.18'
+
+    # Step 3: Cache Go modules
+    - name: Cache Go modules
+      uses: actions/cache@v2
+      with:
+        path: ~/.cache/go-build
+        key: ${{ runner.os }}-go-mod-${{ hashFiles('**/go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-go-mod-
+
+    # Step 4: Install dependencies
+    - name: Install dependencies
+      run: |
+        cd mainserver
+        go mod tidy
+
+    # Step 5: Run tests
+    - name: Run tests
+      run: |
+        cd mainserver
+        go test ./...
+
+    # Step 6: Build the Go binary
+    - name: Build Go binary
+      run: |
+        cd mainserver
+        go build -o myapp .
+
+    # Step 7: Set up Docker Buildx
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2
+
+    # Step 8: Log in to AWS ECR
+    - name: Log in to Amazon ECR
+      uses: aws-actions/amazon-ecr-login@v1
+
+    # Step 9: Build and push Docker image to AWS ECR
+    - name: Build and push Docker image to ECR
+      run: |
+        cd mainserver
+        # Build the Docker image
+        docker build -t ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/myapp:latest .
+        
+        # Push the Docker image to ECR
+        docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/myapp:latest

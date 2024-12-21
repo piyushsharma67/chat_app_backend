@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	"fmt"
 	"mainserver/utils"
 	"net/http"
 
@@ -12,8 +11,7 @@ func Authenticateuser(g *gin.Context) {
 	token := g.GetHeader("Authorization")
 
 	if token == "" {
-		fmt.Println("error occured1", token)
-		utils.ResponseFormatter(g, http.StatusForbidden, false, nil, utils.ErrUserForbidden)
+		utils.ResponseFormatter(g, http.StatusForbidden, false, nil, utils.ErrorUserForbidden)
 		g.Abort()
 		return
 	}
@@ -21,8 +19,7 @@ func Authenticateuser(g *gin.Context) {
 	user, err := utils.ValidateToken(token)
 
 	if err != nil {
-		fmt.Println("error occured2", token)
-		utils.ResponseFormatter(g, http.StatusForbidden, false, nil, utils.ErrErrorOccurred)
+		utils.ResponseFormatter(g, http.StatusForbidden, false, nil, utils.ErrorOccurredAuthentication)
 		g.Abort()
 		return
 	}
