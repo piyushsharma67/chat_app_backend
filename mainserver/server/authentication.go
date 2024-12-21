@@ -20,6 +20,8 @@ type AuthenticationResponse struct {
 	Token string      `json:"token"`
 }
 
+// controller for user signup
+
 func (s *Server) Signup(r *gin.Context) {
 	var req models.SignupRequest
 
@@ -37,20 +39,35 @@ func (s *Server) Signup(r *gin.Context) {
 		}
 	}
 
+	if user.Email != "" {
+		utils.ResponseFormatter(r, http.StatusOK, false, nil, utils.ErrorUserAlreadyExists)
+		return
+	}
+
+	hashedPassword, err := utils.HashPassword(req.Password)
+
+	if err != nil {
+		utils.ResponseFormatter(r, http.StatusInternalServerError, false, nil, utils.ErrErrorOccurred)
+		return
+	}
+
 	if user.ID == 0 {
-		user, err = s.queries.CreateUser(r, schema.CreateUserParams{Name: req.Username, Email: req.Email, Password: req.Password})
+		user, err = s.queries.CreateUser(r, schema.CreateUserParams{Name: req.Username, Email: req.Email, Password: hashedPassword})
 	}
 
 	if err != nil {
 		utils.ResponseFormatter(r, http.StatusBadRequest, true, nil, err)
+		return
 	}
 
 	token, err := utils.GenerateToken(int(user.ID), user.Email)
 
 	if err != nil {
 		utils.ResponseFormatter(r, http.StatusBadRequest, true, nil, err)
+		return
 	}
 	var response AuthenticationResponse
+	user.Password = ""
 
 	response.User = user
 	response.Token = token
@@ -75,10 +92,18 @@ func (s *Server) Signin(r *gin.Context) {
 		}
 	}
 
+	isvalidPassword := utils.ComparePasswords(user.Password, req.Password)
+
+	if !isvalidPassword {
+		utils.ResponseFormatter(r, http.StatusBadRequest, false, nil, utils.ErrorInvalidpassword)
+		return
+	}
+
 	token, err := utils.GenerateToken(int(user.ID), user.Email)
 
 	if err != nil {
 		utils.ResponseFormatter(r, http.StatusBadRequest, true, nil, err)
+		return
 	}
 	var response AuthenticationResponse
 
