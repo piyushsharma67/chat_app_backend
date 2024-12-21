@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"mainserver/middleware"
 	"mainserver/schema"
 	"net/http"
 	"os"
@@ -33,11 +34,12 @@ func New(db *pgx.Conn) *Server {
 func (server *Server) SetupRoutes(r *gin.Engine) *gin.Engine {
 
 	publicRoutes := r.Group("/public")
+	publicRoutes.GET("/", server.Health)
 	publicRoutes.GET("/signin", server.Signin)
 	publicRoutes.POST("/signup", server.Signup)
 
 	privateRoutes := r.Group("/private")
-	privateRoutes.Use(server.AuthenticateToken)
+	privateRoutes.Use(middleware.Authenticateuser)
 
 	privateRoutes.GET("/home", server.Home)
 

@@ -4,14 +4,16 @@ import (
 	"database/sql"
 	"errors"
 	"mainserver/models"
+	"mainserver/schema"
 	"mainserver/utils"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
 
-func (s *Server) Signin(r *gin.Context) {
-	r.JSON(http.StatusOK, string([]byte("I am Healthy")))
+type AuthenticationResponse struct {
+	User  schema.User `json:"user"`
+	Token string      `json:"token"`
 }
 
 func (s *Server) Signup(r *gin.Context) {
@@ -22,35 +24,40 @@ func (s *Server) Signup(r *gin.Context) {
 		return
 	}
 
-	_, err := s.queries.GetUser(r, req.Email)
-	
+	user, err := s.queries.GetUser(r, req.Email)
+
 	if err != nil {
 		if !errors.Is(err, sql.ErrNoRows) {
 			// Handle case where user does not exist
-			r.JSON(http.StatusNotFound, gin.H{"error": "Error occured while fetching user!!"})
-			return
-		} 
+			utils.ResponseFormatter(r, http.StatusNotFound, true, nil, err)
+		}
 	}
-	
-	r.JSON(http.StatusOK, gin.H{"success": "Success"})
-	return
 
+	if user.ID == 0 {
+		user, err = s.queries.CreateUser(r, schema.CreateUserParams{Name: req.Username, Email: req.Email, Password: req.Password})
+	}
+
+	if err != nil {
+		utils.ResponseFormatter(r, http.StatusBadRequest, true, nil, err)
+	}
+
+	token, err := utils.GenerateToken(int(user.ID), user.Email)
+
+	if err != nil {
+		utils.ResponseFormatter(r, http.StatusBadRequest, true, nil, err)
+	}
+	var response AuthenticationResponse
+
+	response.User = user
+	response.Token = token
+
+	utils.ResponseFormatter(r, http.StatusOK, true, response, nil)
 }
 
-func (s *Server) AuthenticateToken(r *gin.Context) {
-	token := r.GetHeader("Authorization")
+func (s *Server) Health(g *gin.Context) {
+	utils.ResponseFormatter(g, http.StatusOK, true, string([]byte("I am healthy")), nil)
+}
 
-	if token == "" {
-		r.AbortWithStatus(http.StatusUnauthorized)
-		return
-	}
+func (s *Server) Signin(r *gin.Context) {
 
-	validated := utils.ValidateToken(token)
-
-	if !validated {
-		r.AbortWithStatus(http.StatusUnauthorized)
-		return
-	}
-
-	r.Next()
 }
