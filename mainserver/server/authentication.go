@@ -2,7 +2,7 @@ package server
 
 import (
 	"database/sql"
-	"fmt"
+	"errors"
 	"mainserver/models"
 	"mainserver/utils"
 	"net/http"
@@ -22,20 +22,18 @@ func (s *Server) Signup(r *gin.Context) {
 		return
 	}
 
-	user, err := s.queries.GetUser(r, req.Email)
-
+	_, err := s.queries.GetUser(r, req.Email)
+	
 	if err != nil {
-        if err == sql.ErrNoRows {
-            // User does not exist, return 404 Not Found
-            r.JSON(http.StatusNotFound, gin.H{"error": "User does not exist"})
-        } else {
-            // Handle other types of errors
-            r.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch user"})
-        }
-        return
-    }
-
-	fmt.Println("user is",user)
+		if !errors.Is(err, sql.ErrNoRows) {
+			// Handle case where user does not exist
+			r.JSON(http.StatusNotFound, gin.H{"error": "Error occured while fetching user!!"})
+			return
+		} 
+	}
+	
+	r.JSON(http.StatusOK, gin.H{"success": "Success"})
+	return
 
 }
 
