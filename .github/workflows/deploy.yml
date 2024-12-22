@@ -50,7 +50,7 @@ jobs:
     
     - name: Print AWS Region
       run: |
-          echo AWS Region: ${{ secrets.AWS_REGION }}
+        echo AWS Region: ${{ secrets.AWS_REGION }}
 
     # Step 7: Set up Docker Buildx
     - name: Set up Docker Buildx
