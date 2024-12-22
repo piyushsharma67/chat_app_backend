@@ -47,6 +47,10 @@ jobs:
       run: |
         cd mainserver
         go build -o myapp .
+    
+    - name: Print AWS Region
+      run: |
+          echo AWS Region: ${{ secrets.AWS_REGION }}
 
     # Step 7: Set up Docker Buildx
     - name: Set up Docker Buildx
@@ -57,9 +61,7 @@ jobs:
     - name: Log in to Amazon ECR
       uses: aws-actions/amazon-ecr-login@v1
      
-    - name: Print AWS Region
-      run: |
-        echo AWS Region: ${{ secrets.AWS_REGION }}
+  
 
     # Step 9: Build and push Docker image to AWS ECR
     - name: Build and push Docker image to ECR
